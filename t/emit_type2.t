@@ -8,7 +8,7 @@ eval {
 	$foo++;
 };
 sleep 1;
-open FIN,"</tmp/mydebug";
+open FIN,"<t/mydebug";
 my @file = <FIN>;
 close FIN;
 

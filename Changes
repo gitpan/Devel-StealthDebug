@@ -46,3 +46,5 @@ Revision history for Perl extension Devel::StealthDebug.
 
 1.004	  Modified t/emit_type2.t to create file 'mydebug' in the test dir.
           (now remove it after the test)
+	
+1.005	  Corrected a bug in the test suite.

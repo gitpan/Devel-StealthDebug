@@ -13,7 +13,7 @@ use Carp;
 use Filter::Simple;
 
 our $SOURCE		= 0;
-our $VERSION	= '1.001'; 	# Beware ! 1.1.2 sould be 1.001002 	
+our $VERSION	= '1.002'; 	# Beware ! 1.1.2 sould be 1.001002 	
 our $TABLEN		= 2;
 
 our $Emit		= 'carp';
@@ -173,13 +173,20 @@ sub add_watch {
 
 	$var2	    =~ s/[\$\@\%]//;
 
+	my ($pre,$post);
+
+
+	if ($orig =~ /\s*my\s*[\@\$\%]/) {
+		$pre  = $orig;
+		$pre  =~ s/(\s*my\s*[\@\$\%]$var2).*/$1;/i;
+	}
+	
 	if ($orig =~ m/(=|\+\+|--)/) {
-		$orig =~ s/\s*my(\s*[\@\$\%]$var2)/$1/i;
-	} else { 
-		$orig = '' 
+		$post = $orig;
+		$post =~ s/.*([\@\$\%]$var2)/$1/i;
 	}
 
-	return "tie $var,'Devel::StealthDebug','$var';$orig$comment";
+	return "$pre tie $var,'Devel::StealthDebug','$var';$post$comment";
 }
 
 sub check_when_cond {
@@ -207,12 +214,12 @@ FILTER {
 	#
 	# Should we really forbid pure comment lines
 	#
-   	s/^(?!#)(.*?#.*?!assert\((.+?)\)!)/add_assert($1,$2)/meg;
- 	s/^(?!#)(.*?)(#.*?!watch\((.+?)\)!)/add_watch($1,$2,$3)/meg;
- 	s/^(?!#)(.*?)(#.*?!emit\((.+?)\)!)/add_emit($1,$3)/meg;
- 	s/^(?!#)(.*?)(#.*?!dump\((.+?)\)!)/add_dump($1,$3)/meg;
- 	s/^(?!#)(.*?(#.*?!when\((.+?),(.+?),(.+?)\)!))/add_when($1,$3,$4,$5)/meg;
- 	s/^(?!#)(.*?(#.*?!emit_type\((.+?)\)!))/emit_type($1,$3)/meg;
+   	s/^(.*?#.*?!assert\((.+?)\)!)/add_assert($1,$2)/meg;
+ 	s/^(.*?)(#.*?!watch\((.+?)\)!)/add_watch($1,$2,$3)/meg;
+ 	s/^(.*?)(#.*?!emit\((.+?)\)!)/add_emit($1,$3)/meg;
+ 	s/^(.*?)(#.*?!dump\((.+?)\)!)/add_dump($1,$3)/meg;
+ 	s/^(.*?(#.*?!when\((.+?),(.+?),(.+?)\)!))/add_when($1,$3,$4,$5)/meg;
+ 	s/^(.*?(#.*?!emit_type\((.+?)\)!))/emit_type($1,$3)/meg;
 	if ($SOURCE)	{ print SOURCE  "$_\n" }  ; 
 	s/(.)/$1/mg;
 }; 
@@ -411,44 +418,45 @@ Devel::StealthDebug - Simple non-intrusive debug module
 
 # in user's code:
 
-Use Devel::StealthDebug;
+use Devel::StealthDebug;
 
 ... #!assert(<cond>)!
 
-      will die at this line if <cond> is not verified...
+ will die at this line if <cond> is not verified...
 
 ... #!watch(<var_name>)!
 
-      will carp each access to <var_name> 
-      (Idea from Srinivasan's monitor module)
+ will carp each access to <var_name> 
+ (Idea from Srinivasan's monitor module)
 
 ... #!emit(<double_quoted_string_to_be_printed>)!
 
-      will 'emit' the string
-	  Depending on emit_type it will print, carp, croak or add to a file
+ will 'emit' the string Depending on emit_type
+ it will print, carp, croak or add to a file
 
-	  carp is the default value for emit_type
+ carp is the default value for emit_type
 	  
 ... #!dump(<ref to a variable to be dumped>)!
 
-      will emit the variable's structure
+ will emit the variable's structure
 
 ... #!when(<var_name>,<op>,<value>)!
 
-      will emit when <var_name> will pass the condition described by 
-	  <op><value>. Currently, only works for 'watched' scalar... 
+ will emit when <var_name> will pass the condition described by 
+ <op><value>. Currently, only works for 'watched' scalar... 
 
 ... #!emit_type(carp|croak|print)!
 
-      Define the emit's behaviour 
+ Define the emit's behaviour 
 
-	  Can also be set on the use line :
-	  use Devel::StealthDebug emit_type => 'croak';
+ Can also be set on the use line :
+ use Devel::StealthDebug emit_type => 'croak';
 
-	  Note if you set it this way you gain an additional feature : emit to file
-	  use Devel::StelthDebug emit_type => '/path/to/file';
+ Note that if you set it this way you gain an additional feature, 
+ you can now emit to a file :
+ use Devel::StelthDebug emit_type => '/path/to/file';
 
-	  'carp' is the default value
+ 'carp' is the default value
 
 
 =head1 ABSTRACT
@@ -497,6 +505,41 @@ Filter::Simple module.
 
 Furthermore I've tried to group (and when possible enhance) in this modules
 several features dissiminated (or simply missing) in several modules.
+
+=head1 EXAMPLES
+
+ use Devel::StealthDebug;
+
+ my $foo = 0;
+ ... Several processing on $foo
+ my $bar = 1 / $foo; 	#!assert($foo != 0)!
+ 
+ my %myhash;			#!watch(%myhash)!
+
+ sub func1 {			#!emit(Entering func1)!
+ ...
+ }
+
+=head1 BUGS
+
+Of course, many ;-)
+
+The code could probably be more robust.
+
+For example, I'd strongly suggest to use a SIMPLE instruction on the line where
+the watch() fonction is :
+
+ my ($foo,%bar);!watch(%bar)!
+ will break...
+
+ Use
+ my $foo;
+ my %bar;!watch(%bar)!
+ instead
+
+=head1 SEE ALSO
+
+L<Carp::Assert>, L<Filter::Simple>
 
 =head1 AUTHOR
 

@@ -28,3 +28,7 @@ _ Review(rewrite) dumpvalue which was rewritten 'a la va-vite' just before relea
   I'm not too proud of this part...
 
 _ Add the 'enable' directive proposed by Tim BUNCE
+
+_ Make the code more robust (especially watch !)
+	my ($foo,%bar); #!watch(%bar)!
+  actually break...

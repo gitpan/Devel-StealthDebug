@@ -30,3 +30,9 @@ Revision history for Perl extension Devel::StealthDebug.
 
 	  And renamed this module (again) to its final name Devel::StealthDebug.
 
+1.002 Yann KEHERVE's special edition (Yes, it's now a tradition)
+
+		Thanks to his feedback, I 
+		
+	  Corrected some typos, completed the doc.
+	  Corrected a bug with watch() under use strict.

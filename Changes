@@ -94,3 +94,8 @@ Revision history for Perl extension Devel::StealthDebug.
 
 	  I also tried to improve my testing-fu, so few test files were also
 	  added/rewritten/shortenned...
+
+1.008 
+	  Now, correctly testing Data::Dumper::Dumper use 
+	  (thanks to Eric Cholet and Philippe Bruhat)
+	  So, hopefully, no more tests fail on t/dump_data_dumper.t

@@ -1,4 +1,3 @@
-
 use Test::More;
 use vars qw($TESTS);
 
@@ -15,8 +14,9 @@ use File::Temp "tempfile";
 use Devel::StealthDebug DUMPER=>1, emit_type => 'print';
 
 close STDOUT;
-my ($fh,$fn)= tempfile() or die $!;
-open (STDOUT, "> $fn") or die $!;
+my ($fh1,$fn1)= tempfile() or die $!;
+my ($fh2,$fn1)= tempfile() or die $!;
+open (STDOUT, "> $fn1") or die $!;
 
 my %var;
 $var{scalar}=3;
@@ -25,25 +25,18 @@ $var{hash}={a=>'b',b=>'c',c=>'d'};
 
 my $donothing='whatever'; #!dump(\%var)!;
 close STDOUT;
-open (STDIN,"< $fn");
+
+open(TMP, "> $fn2");
+print TMP Data::Dumper::Dumper(\%var);
+close TMP;
+
+open (TMP,"< $fn2");
+open (STDIN,"< $fn1");
 my ($out,$check);
 for(1..$TESTS) {
 	$out	=<STDIN>;
-	$check	=quotemeta(<DATA>);
+	$check	=quotemeta(<TMP>);
 	like($out , qr/$check/);
 }
+close TMP;
 close STDIN;
-__DATA__
-$\%var = {
-  'scalar' => 3,
-  'hash' => {
-    'a' => 'b',
-    'b' => 'c',
-    'c' => 'd'
-  },
-  'array' => [
-    '',
-    'b',
-    3
-  ]
-};

@@ -12,13 +12,13 @@ use strict;
 use Carp;
 use Filter::Simple;
 
-our $SOURCE		= 0;
-our $VERSION	= '1.007'; 	# Beware ! 1.1.2 sould be 1.001002 	
-our $TABLEN		= 2;
-our $ENABLE		= 1;
-our $DUMPER		= 0;
+our $SOURCE	= 0;
+our $VERSION	= '1.008'; 	# Beware ! 1.1.2 sould be 1.001002 	
+our $TABLEN	= 2;
+our $ENABLE	= 1;
+our $DUMPER	= 0;
 
-our $Emit		= 'carp';
+our $Emit	= 'carp';
 our $Counter	= 1;
 
 my %Wait_Cond;
@@ -66,7 +66,8 @@ sub import {
 	}
         if ($DUMPER) {
             require Data::Dumper ;
-            $Data::Dumper::Indent = 1 ;
+            $Data::Dumper::Indent = 1;
+	    $Data::Dumper::Sortkeys = 1;
         }
 }
 
@@ -116,7 +117,7 @@ sub add_dump  {
 
 	$Counter++;
 
-	my $output = $orig . ';Devel::StealthDebug::emit(';
+	my $output = $orig . ';$Data::Dumper::Sortkeys=1;Devel::StealthDebug::emit(';
 	my @vars = split (/\s*,\s*/, $ref) ;
 	my $i = 0 ;
 

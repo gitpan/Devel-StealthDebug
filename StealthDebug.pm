@@ -13,7 +13,7 @@ use Carp;
 use Filter::Simple;
 
 our $SOURCE		= 0;
-our $VERSION	= '1.003'; 	# Beware ! 1.1.2 sould be 1.001002 	
+our $VERSION	= '1.004'; 	# Beware ! 1.1.2 sould be 1.001002 	
 our $TABLEN		= 2;
 our $ENABLE		= 1;
 

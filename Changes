@@ -43,3 +43,6 @@ Revision history for Perl extension Devel::StealthDebug.
 	   (mainly to make t/dump.t consistent on different boxes)
 	  Added the ENABLE feature on the use line (Idea from Tim Bunce, and
 	  also asked by Yann...)
+
+1.004	  Modified t/emit_type2.t to create file 'mydebug' in the test dir.
+          (now remove it after the test)

@@ -1,5 +1,5 @@
 use Test::More   tests => 1;
-use Devel::StealthDebug emit_type => '/tmp/mydebug';
+use Devel::StealthDebug emit_type => 't/mydebug';
 
 my $foo;
 
@@ -15,3 +15,4 @@ close FIN;
 my $file = join "",@file;
 
 like($file,qr/emit to file/);
+unlink 't/mydebug';

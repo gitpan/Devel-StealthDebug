@@ -13,7 +13,7 @@ use Carp;
 use Filter::Simple;
 
 our $SOURCE		= 0;
-our $VERSION	= '1.005'; 	# Beware ! 1.1.2 sould be 1.001002 	
+our $VERSION	= '1.006'; 	# Beware ! 1.1.2 sould be 1.001002 	
 our $TABLEN		= 2;
 our $ENABLE		= 1;
 
@@ -100,7 +100,7 @@ sub add_emit {
 
 	$text   =~ s/^"(.*)"$/$1/;
 	$text   =~ s/\"/\\\"/g;
-	return "Devel::StealthDebug::emit \"$text\";$orig";
+	return "$orig;Devel::StealthDebug::emit \"$text\";";
 }
 
 sub add_dump  {
@@ -110,7 +110,7 @@ sub add_dump  {
 	$Counter++;
 	my $output;
 
-	return "Devel::StealthDebug::emit Devel::StealthDebug::dumpvalue($ref,0);$orig";
+	return "$orig;Devel::StealthDebug::emit Devel::StealthDebug::dumpvalue($ref,0)";
 }
 
 sub dumpvalue {
@@ -188,25 +188,23 @@ sub add_when {
 
 sub add_watch {
 	my $orig    = shift;
-	my $comment = shift;
 	my $var     = my $var2 = shift;
 
 	$var2	    =~ s/[\$\@\%]//;
 
 	my ($pre,$post);
 
-
 	if ($orig =~ /\s*my\s*[\@\$\%]/) {
 		$pre  = $orig;
 		$pre  =~ s/(\s*my\s*[\@\$\%]$var2).*/$1;/i;
 	}
 	
-	if ($orig =~ m/(=|\+\+|--)/) {
+	if ($orig =~ /(=|\+\+|--)/) {
 		$post = $orig;
-		$post =~ s/.*([\@\$\%]$var2)/$1/i;
+		$post =~ s/.*([\@\$\%]$var2)/$1/si;
 	}
 
-	return "$pre tie $var,'Devel::StealthDebug','$var';$post$comment";
+	return "$pre tie $var,'Devel::StealthDebug','$var';$post";
 }
 
 sub check_when_cond {
@@ -235,12 +233,12 @@ FILTER {
 	# Should we really forbid pure comment lines
 	#
 	if ($ENABLE) {
-   	s/^(.*?#.*?!assert\((.+?)\)!)/add_assert($1,$2)/meg;
- 	s/^(.*?)(#.*?!watch\((.+?)\)!)/add_watch($1,$2,$3)/meg;
- 	s/^(.*?)(#.*?!emit\((.+?)\)!)/add_emit($1,$3)/meg;
- 	s/^(.*?)(#.*?!dump\((.+?)\)!)/add_dump($1,$3)/meg;
- 	s/^(.*?(#.*?!when\((.+?),(.+?),(.+?)\)!))/add_when($1,$3,$4,$5)/meg;
- 	s/^(.*?(#.*?!emit_type\((.+?)\)!))/emit_type($1,$3)/meg;
+   	s/^([^#]*?)(#[^#]*?!assert\((.+?)\)!)/add_assert($1,$3)/meg;
+ 	s/^([^#]*?)(#[^#]*?!watch\((.+?)\)!)/add_watch($1,$3)/meg;
+ 	s/^([^#]*?)(#[^#]*?!emit\((.+?)\)!)/add_emit($1,$3)/meg;
+ 	s/^([^#]*?)(#[^#]*?!dump\((.+?)\)!)/add_dump($1,$3)/meg;
+ 	s/^([^#]*?)(#[^#]*?!when\((.+?),(.+?),(.+?)\)!)/add_when($1,$3,$4,$5)/meg;
+ 	s/^([^#]*?)(#[^#]*?!emit_type\((.+?)\)!)/emit_type($1,$3)/meg;
 	}
 	if ($SOURCE)	{ print SOURCE  "$_\n" }  ; 
 	#s/(.)/$1/mg;

@@ -48,3 +48,20 @@ Revision history for Perl extension Devel::StealthDebug.
           (now remove it after the test)
 	
 1.005	  Corrected a bug in the test suite.
+
+1.006 Daniel GARDNER's special edition
+
+	  Who was kind enough not to only give me some (positive) feedback
+	  but also provide some enhancements to the code :
+
+	  	StealthDebug features are now disabled on commented lines
+		(#my $foo=10; #!emit($foo)!) to avoid spurious debug messages
+		on part of the code you've just commented out.
+
+		'emit' feature received some extra DWIMess :
+		namely the function is processed after the code beginning the line
+		my $foo='hello'; #!emit("$foo world")!
+		will now emit 'hello world' as most of you would expect...
+		Same behaviour for 'dump' BUT NOT for 'assert'
+		(this might change later as I'm not yet fixed, your opinion/feedback
+		is most welcome on this point)

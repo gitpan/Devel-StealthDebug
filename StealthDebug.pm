@@ -13,8 +13,9 @@ use Carp;
 use Filter::Simple;
 
 our $SOURCE		= 0;
-our $VERSION	= '1.002'; 	# Beware ! 1.1.2 sould be 1.001002 	
+our $VERSION	= '1.003'; 	# Beware ! 1.1.2 sould be 1.001002 	
 our $TABLEN		= 2;
+our $ENABLE		= 1;
 
 our $Emit		= 'carp';
 our $Counter	= 1;
@@ -24,21 +25,40 @@ my %Wait_Cond;
 sub import {
 	shift;
 
-	while (my $imported = shift @_) {
+	while (my $imported = shift) {
 		if ($imported eq 'SOURCE') {
-			my $file = shift @_;
+			my $file = shift;
 			open SOURCE,"> $file"; 
 			$SOURCE = 1;
-		}
-
-		if ($imported eq 'emit_type') {
-			$Emit = shift @_;
+		} elsif ($imported eq 'emit_type') {
+			$Emit = shift;
 			if ($Emit =~ m:/:) {
 				my $tfh;
 				open($tfh,">>$Emit") or die $!;	# replace filename by filehandle.
 				select($tfh);$|++;
 				$Emit=$tfh;
 			}
+		} elsif ($imported eq 'ENABLE') {
+			my $file_or_not = shift;
+
+			$ENABLE = $file_or_not;				# By default assume it's a value
+
+			if (-e $file_or_not) {				# If the file exists
+			
+				$ENABLE = 0;						# disable ENABLE
+				
+				open INFILE,"<$file_or_not" or croak "Can't open $file_or_not ($!)";
+				while(my $authorized = <INFILE>) {
+					chomp $authorized;
+					if ($0 =~ /$authorized/) {	# unless the file allows it.
+						$ENABLE = 1; #  unless
+						last;
+					}
+				}
+				close INFILE;
+			}
+		} else {
+			croak "Unknown $imported option ($imported @_)";
 		}
 	}
 }
@@ -118,7 +138,7 @@ sub dump_hash {
 	$output		.= "$tab\n";
 	$tab 		.= " ";
 
-	for my $elem (keys %$var) {
+	for my $elem (sort keys %$var) {
 		$output .= "$tab$elem => ";
 		$output .= dumpvalue($var->{$elem},$tabn);
 	}
@@ -214,14 +234,16 @@ FILTER {
 	#
 	# Should we really forbid pure comment lines
 	#
+	if ($ENABLE) {
    	s/^(.*?#.*?!assert\((.+?)\)!)/add_assert($1,$2)/meg;
  	s/^(.*?)(#.*?!watch\((.+?)\)!)/add_watch($1,$2,$3)/meg;
  	s/^(.*?)(#.*?!emit\((.+?)\)!)/add_emit($1,$3)/meg;
  	s/^(.*?)(#.*?!dump\((.+?)\)!)/add_dump($1,$3)/meg;
  	s/^(.*?(#.*?!when\((.+?),(.+?),(.+?)\)!))/add_when($1,$3,$4,$5)/meg;
  	s/^(.*?(#.*?!emit_type\((.+?)\)!))/emit_type($1,$3)/meg;
+	}
 	if ($SOURCE)	{ print SOURCE  "$_\n" }  ; 
-	s/(.)/$1/mg;
+	#s/(.)/$1/mg;
 }; 
 
 sub TIESCALAR {
@@ -454,11 +476,29 @@ use Devel::StealthDebug;
 
  Note that if you set it this way you gain an additional feature, 
  you can now emit to a file :
- use Devel::StelthDebug emit_type => '/path/to/file';
+ use Devel::StealthDebug emit_type => '/path/to/file';
+ 'carp' being the default value
 
- 'carp' is the default value
+ You can also pass another option on the use line :
 
+ use Devel::StealthDebug  ENABLE=>'/path/to/file';
+ or
+ use Devel::StealthDebug  ENABLE=>$ENV{WHATEVER};
 
+ The second form enable debugging only if the var passed as value is 'true'
+ (i.e. different from undef,'',zero, or empty list)
+ 
+ The first form will enable the debug instructions if
+ '/path/to/file' don't exist or exist AND contain a line (regex) which match
+ the current file name.
+
+ This behaviour may sound odd, but as there's no way to know it you pass a value
+ or a filename, a first test is made to check if the file exists, if it isn't 
+ the case then a value is assumed (so '/path/to/missing/file' is treated as a
+ value which is 'true' and so debugging is enabled).
+ If the file exists, debugging is disabled unless this file contains a line 
+ whith a regex which matchs the current file name.
+   
 =head1 ABSTRACT
 
 This module will allow you to debug your code in a non-intrusive way.

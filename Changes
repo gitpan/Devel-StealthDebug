@@ -36,3 +36,10 @@ Revision history for Perl extension Devel::StealthDebug.
 		
 	  Corrected some typos, completed the doc.
 	  Corrected a bug with watch() under use strict.
+
+1.003 Adam FOXSON's special edition
+
+	  Modified the dump() function to display hash sorted by keys
+	   (mainly to make t/dump.t consistent on different boxes)
+	  Added the ENABLE feature on the use line (Idea from Tim Bunce, and
+	  also asked by Yann...)

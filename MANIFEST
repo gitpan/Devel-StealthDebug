@@ -4,7 +4,12 @@ Makefile.PL
 MANIFEST
 README
 TODO
+t/DEBUG_ENABLED
 t/assert.t
+t/debug_file_allow.t
+t/debug_file_dont_allow.t
+t/debug_env_allow.t
+t/debug_env_dont_allow.t
 t/dump.t
 t/emit.t
 t/emit_type1.t

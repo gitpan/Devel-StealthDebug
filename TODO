@@ -1,0 +1,30 @@
+- Make it clean (Hubris...)
+	* Make the regexes consistent (and make them work)
+	* Strengthen the code (find kind people to test it)
+    * Be consistent with the die/emit/carp
+	
+- Make current features more cutomizable
+	(set messages format...)
+
+- Add (I mean find) new USEFUL features
+
+- Add FileHandle method handling (TIEHANDLE, READ,...EOF)
+
+_ Get the value of the watch'ed variable if the watch isn't on the initialization...
+  (when value is "lost");
+  
+_ Add more tests (Hi ! fellow testers ;-)
+
+_ Rethink the syntax (drop the surrounding ! ? prefix with DD_ ?)
+
+- Document the 'use Devel::StealthDebug source=>"/path/to/file"' feature 
+  (but first make it usable)
+
+_ Explicitly describe some pitfalls
+
+_ Add an unwatch() fonction ?
+
+_ Review(rewrite) dumpvalue which was rewritten 'a la va-vite' just before release.
+  I'm not too proud of this part...
+
+_ Add the 'enable' directive proposed by Tim BUNCE

@@ -1,0 +1,15 @@
+Changes
+StealthDebug.pm
+Makefile.PL
+MANIFEST
+README
+TODO
+t/assert.t
+t/load.t
+t/emit.t
+t/dump.t
+t/watch.t
+t/when.t
+t/emit_type1.t
+t/emit_type2.t
+t/emit_type3.t

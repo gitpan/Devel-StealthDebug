@@ -35,7 +35,9 @@ All points of view are worthy even if you feel like a newbie
 (ESPECIALLY if you're a newbie !)
 
 And, thank you to all those who contributed by their comments :
-Tim BUNCE, Jean-michel VILOMET, Yann KEHERVE, Adam FOXSON, Daniel GARDNER.
+Tim BUNCE, Jean-michel VILOMET, Yann KEHERVE, Adam FOXSON, Daniel GARDNER, 
+Gerald RICHTER.
+(Full credits in the 'Changes' file)
 
 DEPENDENCIES
 
@@ -44,6 +46,10 @@ This module requires :
 	Test::More
 	Filter::Simple
 	Carp
+
+also recommended :
+
+	Data::Dumper
 
 COPYRIGHT AND LICENCE
 

@@ -7,9 +7,6 @@
 
 - Add FileHandle method handling (TIEHANDLE, READ,...EOF)
 
-_ Get the value of the watch'ed variable if the watch isn't on the initialization...
-  (when value is "lost");
-  
 _ Rethink the syntax (drop the surrounding ! ? prefix with DD_ ?)
 
 - Document the 'use Devel::StealthDebug SOURCE=>"/path/to/file"' feature 

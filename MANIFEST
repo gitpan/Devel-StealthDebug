@@ -11,6 +11,7 @@ t/debug_file_dont_allow.t
 t/debug_env_allow.t
 t/debug_env_dont_allow.t
 t/dump.t
+t/dump_data_dumper.t
 t/emit.t
 t/emit_type1.t
 t/emit_type2.t

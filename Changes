@@ -51,17 +51,46 @@ Revision history for Perl extension Devel::StealthDebug.
 
 1.006 Daniel GARDNER's special edition
 
-	  Who was kind enough not to only give me some (positive) feedback
-	  but also provide some enhancements to the code :
+	  Who was kind enough to not only give me some (positive) feedback
+	  but also submited some enhancements to the code :
 
-	  	StealthDebug features are now disabled on commented lines
-		(#my $foo=10; #!emit($foo)!) to avoid spurious debug messages
-		on part of the code you've just commented out.
+	  	StealthDebug features are now disabled on commented line
+		(#my $foo=10; #!emit($foo)!) to allow you to disable StealthDebug
+		functions on large part of the code you've just commented out.
 
 		'emit' feature received some extra DWIMess :
 		namely the function is processed after the code beginning the line
 		my $foo='hello'; #!emit("$foo world")!
 		will now emit 'hello world' as most of you would expect...
 		Same behaviour for 'dump' BUT NOT for 'assert'
-		(this might change later as I'm not yet fixed, your opinion/feedback
-		is most welcome on this point)
+		(this might change later as I'm not fixed yet)
+
+1.007  Gerald RICHTER's special edition
+
+	  Dedicated to another cool user, who use this module and additionally
+	  suggest enhancements (and even send me the patch implementing them !)
+
+	  'dump' has new features :
+	  _ It can have multiple args.
+	  _ The first arg can be an initial description
+	  	( #!dump("Some text ", $foo, $bar)! )
+	  _ It shows the variables names
+	  _ It can uses Data::Dumper (to prevent a memory problem with circular references)
+	    it's configurable via a DUMPER => 1 (otherwise the old "inhouse" dump 
+		will still be used by default)
+	  WARNING : The dump output has changed.  
+	  (Tell me if you need the old output back)
+	  The "inhouse" 'dump' output is sligtly different from the Data::Dumper one.
+	  (mainly beccause I sort the hash keys to ensure consistency accross
+	  different platform...)
+	  Depending on the feedback I'll get, I'll modify this feature which
+	  is far from being yet satisfying to me.
+
+	  'carp' and 'croak' are also enhanced to display more info.
+
+	  'watch' can now be used on already existing variable.
+
+	  So once again big thanks to you Gerald.
+
+	  I also tried to improve my testing-fu, so few test files were also
+	  added/rewritten/shortenned...

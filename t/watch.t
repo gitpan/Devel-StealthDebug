@@ -1,4 +1,11 @@
-use Test::More   tests => 12;
+use Test::More;
+use vars qw($TESTS);
+
+BEGIN {
+	$TESTS = 12;
+	plan tests => $TESTS;
+}
+
 #use Devel::StealthDebug SOURCE => '/tmp/source.txt';
 use Devel::StealthDebug;
 use File::Temp "tempfile";
@@ -27,28 +34,24 @@ $dummy = $testscalar;
 close STDERR;
 
 open (STDIN,"< $fn");
-$out=<STDIN>;
-like($out , qr/STORE \(\%testhash{test1} \<\- 1\)/);
-$out=<STDIN>;
-like($out , qr/FETCH \(\%testhash{test1} -> 1\)/);
-$out=<STDIN>;
-like($out , qr/STORE \(\%testhash{test1} <- 2\)/);
-$out=<STDIN>;
-like($out , qr/FETCH \(\%testhash{test1} -> 2\)/);
-$out=<STDIN>;
-like($out , qr/STORE \(\@testarray\[1\] <- 1\)/);
-$out=<STDIN>;
-like($out , qr/FETCH \(\@testarray\[1\] -> 1\)/);
-$out=<STDIN>;
-like($out , qr/STORE \(\@testarray\[1\] <- 2\)/);
-$out=<STDIN>;
-like($out , qr/FETCH \(\@testarray\[1\] -> 2\)/);
-$out=<STDIN>;
-like($out , qr/STORE \(\$testscalar <- 1\)/);
-$out=<STDIN>;
-like($out , qr/FETCH \(\$testscalar -> 1\)/);
-$out=<STDIN>;
-like($out , qr/STORE \(\$testscalar <- 2\)/);
-$out=<STDIN>;
-like($out , qr/FETCH \(\$testscalar -> 2\)/);
-close STDIN;
+my ($out,$check);
+for(1..$TESTS) {
+	$out	= <STDIN>;
+	$check 	= <DATA>;
+	chomp $check;
+	$check 	= quotemeta($check);
+	like($out, qr/$check/);
+}
+__DATA__
+STORE (%testhash{test1} <- 1)
+FETCH (%testhash{test1} -> 1)
+STORE (%testhash{test1} <- 2)
+FETCH (%testhash{test1} -> 2)
+STORE (@testarray[1] <- 1)
+FETCH (@testarray[1] -> 1)
+STORE (@testarray[1] <- 2)
+FETCH (@testarray[1] -> 2)
+STORE ($testscalar <- 1)
+FETCH ($testscalar -> 1)
+STORE ($testscalar <- 2)
+FETCH ($testscalar -> 2)

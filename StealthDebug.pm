@@ -13,9 +13,10 @@ use Carp;
 use Filter::Simple;
 
 our $SOURCE		= 0;
-our $VERSION	= '1.006'; 	# Beware ! 1.1.2 sould be 1.001002 	
+our $VERSION	= '1.007'; 	# Beware ! 1.1.2 sould be 1.001002 	
 our $TABLEN		= 2;
 our $ENABLE		= 1;
+our $DUMPER		= 0;
 
 our $Emit		= 'carp';
 our $Counter	= 1;
@@ -38,6 +39,8 @@ sub import {
 				select($tfh);$|++;
 				$Emit=$tfh;
 			}
+		} elsif ($imported eq 'DUMPER') {
+                    $DUMPER = shift ;
 		} elsif ($imported eq 'ENABLE') {
 			my $file_or_not = shift;
 
@@ -61,13 +64,17 @@ sub import {
 			croak "Unknown $imported option ($imported @_)";
 		}
 	}
+        if ($DUMPER) {
+            require Data::Dumper ;
+            $Data::Dumper::Indent = 1 ;
+        }
 }
 
 sub emit {
 	if ($Emit eq 'carp') {	
-		carp @_;
+		carp @_, ' in ' , (caller(1))[3] ;
 	} elsif ($Emit eq 'croak') {
-		croak @_;
+		croak @_, ' in ' , (caller(1))[3];
 	} elsif ($Emit eq 'print') { 
 		print @_;
 	} elsif (ref $Emit =~ /CODE/) { 
@@ -108,25 +115,49 @@ sub add_dump  {
 	my $ref  = shift;
 
 	$Counter++;
-	my $output;
 
-	return "$orig;Devel::StealthDebug::emit Devel::StealthDebug::dumpvalue($ref,0)";
+	my $output = $orig . ';Devel::StealthDebug::emit(';
+	my @vars = split (/\s*,\s*/, $ref) ;
+	my $i = 0 ;
+
+        if ($DUMPER) {
+            while ($vars[0] =~ /^\'|\"/) {
+                $output .= (shift @vars) . (@vars?',':'') ;
+            }
+            $output .=  'Data::Dumper -> Dump ([' . join (',', @vars) . "],['" . join ("','", @vars) . "']));";
+        } else {
+	    	foreach my $var (@vars)	{
+	        	$output .=  ($i++?',':'') . "'\$$var = ', Devel::StealthDebug::dumpvalue($var,-1)";
+	    	}
+            $output .=  ');' ;
+        }
+	return $output ;
 }
 
 sub dumpvalue {
 	my $type 	= shift;
-	my $tab		= shift;
+	my $tabn	= shift;
+	
 	my $ref     = ref $type;
+	my $tab		= ' ' x ($tabn+1);
+	my $output;
+	$tabn		+= $TABLEN;
 
 	if 			($type =~ /^($ref=)?HASH/) {
-		return     dump_hash($type,$tab+$TABLEN,'');
+		$output = "{\n".dump_hash($type,$tabn,'')."$tab},\n";
 	} elsif 	($type =~ /^($ref=)?ARRAY/) {
-		return     dump_array($type,$tab+$TABLEN,'');
+		$output = "[\n".dump_array($type,$tabn,'')."$tab],\n";
 	} elsif 	($type =~ /^($ref=)?SCALAR/) {
-		return     dump_scalar($type,$tab+$TABLEN,'');
+		$output = dump_scalar($type,$tabn,'');
 	} else {
-		return    dump_scalar($type,$tab+$TABLEN,'');
+		$output = dump_scalar($type,$tabn,'');
 	}
+
+	if (($tabn - $TABLEN) == -1) {
+		$output =~ s/,$/;/s;
+	}
+
+	return $output;
 }
 
 sub dump_hash {
@@ -135,13 +166,18 @@ sub dump_hash {
 	my $output	= shift;
 	
 	my $tab 	 = " " x $tabn;
-	$output		.= "$tab\n";
+	#$output	.= "$tab\n";
 	$tab 		.= " ";
 
 	for my $elem (sort keys %$var) {
-		$output .= "$tab$elem => ";
+		if (ref $elem) {
+			$output .= "$tab$elem => {"
+		} else {
+			$output .= "$tab'$elem' => ";
+		}
 		$output .= dumpvalue($var->{$elem},$tabn);
 	}
+	$output =~ s/\,$//s;	# To remove the last ',' from the list
 	
 	return $output;
 }
@@ -151,7 +187,9 @@ sub dump_scalar {
 	my $tabn 	= shift;
 	my $output	= shift;
 
-	$output		.= "$scalar\n";
+	if ($scalar !~ /\d+/) { $scalar = "'$scalar'" }
+
+	$output		.= "$scalar,\n";
 	
 	return $output;
 }
@@ -164,15 +202,18 @@ sub dump_array {
 	my $i;
 
 	my $tab 	 = " " x $tabn;
-	$output 	.= "$tab\n";
+	#$output 	.= "$tab\n";
+	#$output 	.= "$tab";
 	$tab		.= " ";
 
 	for my $elem (@$var) {
 		$output .= $tab;
-		$output .= $i++;
-		$output .= " => ";
+		#$output .= $i++;
+		#$output .= " => ";
 		$output .= dumpvalue($elem,$tabn);
 	}
+	$output =~ s/\,$//s;	# To remove the last ',' from the list
+	
 	return $output;
 }
 
@@ -192,7 +233,7 @@ sub add_watch {
 
 	$var2	    =~ s/[\$\@\%]//;
 
-	my ($pre,$post);
+	my ($pre,$post,$init);
 
 	if ($orig =~ /\s*my\s*[\@\$\%]/) {
 		$pre  = $orig;
@@ -204,7 +245,9 @@ sub add_watch {
 		$post =~ s/.*([\@\$\%]$var2)/$1/si;
 	}
 
-	return "$pre tie $var,'Devel::StealthDebug','$var';$post";
+	$init = ",\\$var" if (!$pre && !$post) ;
+ 
+	return "$pre tie $var,'Devel::StealthDebug','$var'$init;$post";
 }
 
 sub check_when_cond {
@@ -233,12 +276,12 @@ FILTER {
 	# Should we really forbid pure comment lines
 	#
 	if ($ENABLE) {
-   	s/^([^#]*?)(#[^#]*?!assert\((.+?)\)!)/add_assert($1,$3)/meg;
- 	s/^([^#]*?)(#[^#]*?!watch\((.+?)\)!)/add_watch($1,$3)/meg;
- 	s/^([^#]*?)(#[^#]*?!emit\((.+?)\)!)/add_emit($1,$3)/meg;
- 	s/^([^#]*?)(#[^#]*?!dump\((.+?)\)!)/add_dump($1,$3)/meg;
- 	s/^([^#]*?)(#[^#]*?!when\((.+?),(.+?),(.+?)\)!)/add_when($1,$3,$4,$5)/meg;
- 	s/^([^#]*?)(#[^#]*?!emit_type\((.+?)\)!)/emit_type($1,$3)/meg;
+   	s/^([^#]*?)(#.*?!assert\((.+?)\)!)/add_assert($1,$3)/meg;
+ 	s/^([^#]*?)(#.*?!watch\((.+?)\)!)/add_watch($1,$3)/meg;
+ 	s/^([^#]*?)(#.*?!emit\((.+?)\)!)/add_emit($1,$3)/meg;
+ 	s/^([^#]*?)(#.*?!dump\((.+?)\)!)/add_dump($1,$3)/meg;
+ 	s/^([^#]*?)(#.*?!when\((.+?),(.+?),(.+?)\)!)/add_when($1,$3,$4,$5)/meg;
+ 	s/^([^#]*?)(#.*?!emit_type\((.+?)\)!)/emit_type($1,$3)/meg;
 	}
 	if ($SOURCE)	{ print SOURCE  "$_\n" }  ; 
 	#s/(.)/$1/mg;
@@ -247,9 +290,11 @@ FILTER {
 sub TIESCALAR {
 	my $class	= shift;
 	my $name	= shift;
+    my $value	= shift;
 	my %object;
 
 	$object{name}=$name;
+	$object{value}=$$value if ($value) ;
 	bless \%object,$class;
 }
 
@@ -312,20 +357,22 @@ sub CLEAR {
 sub TIEARRAY {
 	my $class	= shift;
 	my $name 	= shift;
+	my $value	= shift;
 	my %object;
 
 	$object{name} = $name;
-	$object{value}= [];
+	$object{value}= $value?$value:[];
 	bless \%object,$class;
 }
 
 sub TIEHASH {
 	my $class	= shift;
 	my $name 	= shift;
+	my $value	= shift;
 	my %object;
 
 	$object{name} = $name;
-	$object{value}= {};
+	$object{value}= $value?$value:{};
 	bless \%object,$class;
 }
 
@@ -348,8 +395,8 @@ sub EXISTS {
 }
 
 sub FIRSTKEY {
-	my $object = shift;
-	my $toreseteach = keys %{$object->{value}};
+	my $object		= shift;
+	my $toreseteach	= keys %{$object->{value}};
 
 	$object->{lastkey} = each %{$object->{value}};
 	carp "FIRSTKEY ($object->{name})(",$object->{lastkey},")";
@@ -388,15 +435,15 @@ sub PUSH {
 }
 
 sub POP {
-	my $object = shift;
-	my $value = pop  @{$object->{value}};
+	my $object	= shift;
+	my $value	= pop  @{$object->{value}};
 
 	carp "POP ($object)($value)";
 }
 
 sub SHIFT {
-	my $object = shift;
-	my $value = shift  @{$object->{value}};
+	my $object	= shift;
+	my $value	= shift  @{$object->{value}};
 
 	carp "SHIFT ($object)($value)";
 }
@@ -456,7 +503,7 @@ use Devel::StealthDebug;
 
  carp is the default value for emit_type
 	  
-... #!dump(<ref to a variable to be dumped>)!
+... #!dump(<ref to a variable to be dumped>,<another ref>,...)!
 
  will emit the variable's structure
 
@@ -477,11 +524,15 @@ use Devel::StealthDebug;
  use Devel::StealthDebug emit_type => '/path/to/file';
  'carp' being the default value
 
- You can also pass another option on the use line :
+ You can also pass other optionq on the use line :
 
  use Devel::StealthDebug  ENABLE=>'/path/to/file';
  or
  use Devel::StealthDebug  ENABLE=>$ENV{WHATEVER};
+ or
+ use Devel::StealthDebug  DUMPER=>1;
+
+ The third form will make the 'dump' function use Data::Dumper.
 
  The second form enable debugging only if the var passed as value is 'true'
  (i.e. different from undef,'',zero, or empty list)
